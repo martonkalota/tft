@@ -137,3 +137,54 @@ async function renderAdminList(mode) {
     container.appendChild(card);
   });
 }
+
+async function confirmDelete(id) {
+  if (confirm("Biztosan törlöd?")) {
+    const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+
+    if (res.ok) {
+      alert("Törölve!");
+      renderAdminList("delete");  // Törlés után frissíti a listát
+    } else {
+      alert("Hiba történt a törlés közben.");
+    }
+  }
+}
+
+// Szerkesztési űrlap megjelenítése
+function showEditForm(id, unit, unitpicture, item1, item2, item3, trait1, trait2, trait3) {
+  const form = document.getElementById("edit-form-" + id);
+  form.innerHTML = `
+    <div class="edit-form">
+      <input id="edit-unit-${id}" value="${unit}">
+      <input id="edit-unitpicture-${id}" value="${unitpicture}">
+      <input id="edit-item1-${id}" value="${item1}">
+      <input id="edit-item2-${id}" value="${item2}">
+      <input id="edit-item3-${id}" value="${item3}">
+      <input id="edit-trait1-${id}" value="${trait1}">
+      <input id="edit-trait2-${id}" value="${trait2}">
+      <input id="edit-trait3-${id}" value="${trait3}">
+      <button onclick="submitEdit(${id})">💾 Mentés</button>
+    </div>
+  `;
+}
+
+async function submitEdit(id) {
+  const data = {
+    unit: document.getElementById(`edit-unit-${id}`).value,
+    unitpicture: document.getElementById(`edit-unitpicture-${id}`).value,
+    itempicture1: document.getElementById(`edit-item1-${id}`).value,
+    itempicture2: document.getElementById(`edit-item2-${id}`).value,
+    itempicture3: document.getElementById(`edit-item3-${id}`).value,
+    traitpicture1: document.getElementById(`edit-trait1-${id}`).value,
+    traitpicture2: document.getElementById(`edit-trait2-${id}`).value,
+    traitpicture3: document.getElementById(`edit-trait3-${id}`).value
+  };
+  await fetch(`${API_URL}/${id}`, {
+    method: "PUT",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(data)
+  });
+  alert("Mentve!");
+  renderAdminList("edit");
+}
