@@ -1,13 +1,54 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite App</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <title>TFT Admin Panel</title>
+  <link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+
+  <h1>TFT Admin Panel</h1>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('search')">🔍 Keresés</div>
+    <div class="tab" onclick="switchTab('upload')">📤 Feltöltés</div>
+    <div class="tab" onclick="switchTab('edit')">🛠️ Módosítás</div>
+    <div class="tab" onclick="switchTab('delete')">❌ Törlés</div>
+  </div>
+
+  <div class="tab-content active" id="search">
+    <select id="category">
+      <option value="unit">Units</option>
+      <option value="item">Items</option>
+      <option value="trait">Traits</option>
+    </select>
+    <input type="text" id="searchInput" placeholder="Keresés név alapján...">
+    <div id="results" class="grid"></div>
+  </div>
+
+  <div class="tab-content" id="upload">
+    <h3>Új egység feltöltése</h3>
+    <input id="new-unit" placeholder="Unit neve">
+    <input id="new-unitpicture" placeholder="Unit kép URL">
+    <input id="new-item1" placeholder="Item 1 (név[TAB]URL)">
+    <input id="new-item2" placeholder="Item 2 (név[TAB]URL)">
+    <input id="new-item3" placeholder="Item 3 (név[TAB]URL)">
+    <input id="new-trait1" placeholder="Trait 1 (név[TAB]URL)">
+    <input id="new-trait2" placeholder="Trait 2 (név[TAB]URL)">
+    <input id="new-trait3" placeholder="Trait 3 (név[TAB]URL)">
+    <button onclick="uploadData()">Feltöltés</button>
+  </div>
+
+  <div class="tab-content" id="edit">
+    <h3>Egységek szerkesztése</h3>
+    <div id="edit-list" class="grid"></div>
+  </div>
+
+  <div class="tab-content" id="delete">
+    <h3>Egységek törlése</h3>
+    <div id="delete-list" class="grid"></div>
+  </div>
+
+  <script src="src/main.js"></script>
+</body>
 </html>
