@@ -95,3 +95,45 @@ async function handleSearch() {
 document.getElementById("searchInput").addEventListener("input", handleSearch);
 document.getElementById("category").addEventListener("change", handleSearch);
 handleSearch();
+
+async function uploadData() {
+  const data = {
+    unit: document.getElementById("new-unit").value,
+    unitpicture: document.getElementById("new-unitpicture").value,
+    itempicture1: document.getElementById("new-item1").value,
+    itempicture2: document.getElementById("new-item2").value,
+    itempicture3: document.getElementById("new-item3").value,
+    traitpicture1: document.getElementById("new-trait1").value,
+    traitpicture2: document.getElementById("new-trait2").value,
+    traitpicture3: document.getElementById("new-trait3").value
+  };
+  await fetch(API_URL, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(data)
+  });
+  alert("Feltöltve!");
+}
+
+async function renderAdminList(mode) {
+  const container = document.getElementById(mode + "-list");
+  container.innerHTML = "";
+  const data = await fetchData();
+  data.forEach(entry => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <img src="${entry.unitpicture}" alt="${entry.unit}">
+      <span>${entry.unit}</span>
+      ${mode === "edit" ? `
+        <button onclick="showEditForm(${entry.id}, '${entry.unit}', '${entry.unitpicture}', 
+          \`${entry.itempicture1}\`, \`${entry.itempicture2}\`, \`${entry.itempicture3}\`, 
+          \`${entry.traitpicture1}\`, \`${entry.traitpicture2}\`, \`${entry.traitpicture3}\`)">🛠️ Szerkeszt</button>
+        <div id="edit-form-${entry.id}"></div>
+      ` : `
+        <button onclick="confirmDelete(${entry.id})">❌ Törlés</button>
+      `}
+    `;
+    container.appendChild(card);
+  });
+}
