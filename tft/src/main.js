@@ -1,5 +1,82 @@
 const API_URL = "https://retoolapi.dev/DUyWF0/data";
 
+// API adatlekérés
+async function fetchData() {
+  const response = await fetch(API_URL);
+  return await response.json();
+}
+
+// Segédfüggvény: szétválasztja a nevet és a képlinket
+function parseItemString(str) {
+  if (!str || !str.includes("http")) return null;
+  const lastSpaceIndex = str.lastIndexOf(" ");
+  const name = str.slice(0, lastSpaceIndex);
+  const url = str.slice(lastSpaceIndex + 1);
+  return { name, url };
+}
+
+// Admin lista renderelése
+async function renderAdminList(mode) {
+  const container = document.getElementById(mode + "-list");
+  container.innerHTML = "";
+
+  const data = await fetchData();
+
+  data.forEach(entry => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    // Itemek feldolgozása
+    const items = [entry.itempicture1, entry.itempicture2, entry.itempicture3]
+      .map(parseItemString)
+      .filter(Boolean)
+      .map(item => `
+        <div class="item">
+          <img src="${item.url}" alt="${item.name}" title="${item.name}" class="item-icon">
+          <span>${item.name}</span>
+        </div>
+      `).join("");
+
+    // Trait-ek feldolgozása
+    const traits = [entry.traitpicture1, entry.traitpicture2, entry.traitpicture3]
+      .map(parseItemString)
+      .filter(Boolean)
+      .map(trait => `
+        <div class="trait">
+          <img src="${trait.url}" alt="${trait.name}" title="${trait.name}" class="trait-icon">
+          <span>${trait.name}</span>
+        </div>
+      `).join("");
+
+    card.innerHTML = `
+      <img src="${entry.unitpicture}" alt="${entry.unit}" class="unit-image">
+      <h3>${entry.unit}</h3>
+
+      <div class="item-section">
+        <strong>Itemek:</strong>
+        <div class="item-list">${items || "<em>Nincs felszerelés</em>"}</div>
+      </div>
+
+      <div class="trait-section">
+        <strong>Trait-ek:</strong>
+        <div class="trait-list">${traits || "<em>Nincs trait</em>"}</div>
+      </div>
+
+      ${mode === "edit" ? `  
+        <button onclick="showEditForm(${entry.id}, '${entry.unit}', '${entry.unitpicture}', 
+          \`${entry.itempicture1}\`, \`${entry.itempicture2}\`, \`${entry.itempicture3}\`, 
+          \`${entry.traitpicture1}\`, \`${entry.traitpicture2}\`, \`${entry.traitpicture3}\`)">🛠️ Szerkeszt</button>
+        <div id="edit-form-${entry.id}"></div>
+      ` : `  
+        <button onclick="confirmDelete(${entry.id})">❌ Törlés</button>
+      `}
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+
 function switchTab(tabId) {
   document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
   document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
@@ -9,10 +86,7 @@ function switchTab(tabId) {
   if (tabId === "edit") renderAdminList("edit");
   if (tabId === "delete") renderAdminList("delete");
 }
-async function fetchData() {
-  const res = await fetch(API_URL);
-  return await res.json();
-}
+
 
 function render(data, category, keyword) {
   const resultsContainer = document.getElementById("results");
@@ -22,33 +96,42 @@ function render(data, category, keyword) {
     if (category === "unit" && entry.unit?.toLowerCase().includes(keyword)) {
       resultsContainer.innerHTML += `
         <div class="card">
-          <img src="${entry.unitpicture}" alt="${entry.unit}">
-          <span>${entry.unit}</span>
+          <img src="${entry.unitpicture}" alt="${entry.unit}" class="unit-image">
+          <h3>${entry.unit}</h3>
 
           <!-- Itemek megjelenítése -->
-          <div class="item-container">
-            ${[1, 2, 3].map(i => {
-              const item = entry[`itempicture${i}`];
-              if (item?.includes("\t")) {
-                const [name, url] = item.split("\t");
-                return `<div class="item"><img src="${url}" alt="${name}" title="${name}"></div>`;
-              }
-              return '';
-            }).join('')}
+          <div class="item-section">
+            <strong>Itemek:</strong>
+            <div class="item-list">
+              ${[entry.itempicture1, entry.itempicture2, entry.itempicture3]
+                .map(parseItemString)
+                .filter(Boolean)
+                .map(item => `
+                  <div class="item">
+                    <img src="${item.url}" alt="${item.name}" title="${item.name}" class="item-icon">
+                    <span>${item.name}</span>
+                  </div>
+                `).join("") || "<em>Nincs felszerelés</em>"}
+            </div>
           </div>
 
           <!-- Traitek megjelenítése -->
-          <div class="trait-container">
-            ${[1, 2, 3].map(i => {
-              const trait = entry[`traitpicture${i}`];
-              if (trait?.includes("\t")) {
-                const [name, url] = trait.split("\t");
-                return `<div class="trait"><img src="${url}" alt="${name}" title="${name}"></div>`;
-              }
-              return '';
-            }).join('')}
+          <div class="trait-section">
+            <strong>Trait-ek:</strong>
+            <div class="trait-list">
+              ${[entry.traitpicture1, entry.traitpicture2, entry.traitpicture3]
+                .map(parseItemString)
+                .filter(Boolean)
+                .map(trait => `
+                  <div class="trait">
+                    <img src="${trait.url}" alt="${trait.name}" title="${trait.name}" class="trait-icon">
+                    <span>${trait.name}</span>
+                  </div>
+                `).join("") || "<em>Nincs trait</em>"}
+            </div>
           </div>
-        </div>`;
+        </div>
+      `;
     }
 
     if (category === "item") {
@@ -59,7 +142,7 @@ function render(data, category, keyword) {
           if (name.toLowerCase().includes(keyword)) {
             resultsContainer.innerHTML += `
               <div class="card">
-                <img src="${url}" alt="${name}">
+                <img src="${url}" alt="${name}" class="unit-image">
                 <span>${name}</span>
               </div>`;
           }
@@ -75,7 +158,7 @@ function render(data, category, keyword) {
           if (name.toLowerCase().includes(keyword)) {
             resultsContainer.innerHTML += `
               <div class="card">
-                <img src="${url}" alt="${name}">
+                <img src="${url}" alt="${name}" class="unit-image">
                 <span>${name}</span>
               </div>`;
           }
@@ -115,28 +198,6 @@ async function uploadData() {
   alert("Feltöltve!");
 }
 
-async function renderAdminList(mode) {
-  const container = document.getElementById(mode + "-list");
-  container.innerHTML = "";
-  const data = await fetchData();
-  data.forEach(entry => {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <img src="${entry.unitpicture}" alt="${entry.unit}">
-      <span>${entry.unit}</span>
-      ${mode === "edit" ? `
-        <button onclick="showEditForm(${entry.id}, '${entry.unit}', '${entry.unitpicture}', 
-          \`${entry.itempicture1}\`, \`${entry.itempicture2}\`, \`${entry.itempicture3}\`, 
-          \`${entry.traitpicture1}\`, \`${entry.traitpicture2}\`, \`${entry.traitpicture3}\`)">🛠️ Szerkeszt</button>
-        <div id="edit-form-${entry.id}"></div>
-      ` : `
-        <button onclick="confirmDelete(${entry.id})">❌ Törlés</button>
-      `}
-    `;
-    container.appendChild(card);
-  });
-}
 
 async function confirmDelete(id) {
   if (confirm("Biztosan törlöd?")) {
@@ -144,7 +205,7 @@ async function confirmDelete(id) {
 
     if (res.ok) {
       alert("Törölve!");
-      renderAdminList("delete");  // Törlés után frissíti a listát
+      renderAdminList("delete");
     } else {
       alert("Hiba történt a törlés közben.");
     }
@@ -154,6 +215,12 @@ async function confirmDelete(id) {
 // Szerkesztési űrlap megjelenítése
 function showEditForm(id, unit, unitpicture, item1, item2, item3, trait1, trait2, trait3) {
   const form = document.getElementById("edit-form-" + id);
+
+
+  if (form.classList.contains("expanded")) return;
+
+  form.classList.add("expanded");
+
   form.innerHTML = `
     <div class="edit-form">
       <input id="edit-unit-${id}" value="${unit}">
@@ -164,7 +231,7 @@ function showEditForm(id, unit, unitpicture, item1, item2, item3, trait1, trait2
       <input id="edit-trait1-${id}" value="${trait1}">
       <input id="edit-trait2-${id}" value="${trait2}">
       <input id="edit-trait3-${id}" value="${trait3}">
-      <button onclick="submitEdit(${id})">💾 Mentés</button>
+      <button class="expand-edit" onclick="submitEdit(${id})">💾 Mentés</button>
     </div>
   `;
 }
@@ -180,11 +247,13 @@ async function submitEdit(id) {
     traitpicture2: document.getElementById(`edit-trait2-${id}`).value,
     traitpicture3: document.getElementById(`edit-trait3-${id}`).value
   };
-  await fetch(`${API_URL}/${id}`, {
+  const res = await fetch(`${API_URL}/${id}`, {
     method: "PUT",
-    headers: {"Content-Type": "application/json"},
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
   });
-  alert("Mentve!");
-  renderAdminList("edit");
+  if (res.ok) {
+    alert("Sikeres módosítás!");
+    renderAdminList("edit");
+  }
 }
